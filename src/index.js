@@ -38,19 +38,11 @@ export default class SwipeUpDown extends Component{
       }
     };
     this.checkCollapsed = true;
-    this.showMini = this.showMini.bind(this);
     this.showFull = this.showFull.bind(this);
   }
 
   componentWillMount() {
-    this._panResponder = PanResponder.create({
-      onMoveShouldSetPanResponder: (event, gestureState) => {
-	console.log('_onMoveShouldSetPanResponder__', gestureState.dx, gestureState.dy);
-        return !(Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5);
-      },
-      onPanResponderMove: this._onPanResponderMove.bind(this),
-      onPanResponderRelease: this._onPanResponderRelease.bind(this)
-    });
+    this._activatePanResponder();
   }
 
   componentDidMount() {
@@ -75,10 +67,20 @@ export default class SwipeUpDown extends Component{
     this.viewRef.setNativeProps(this.customStyle);
   }
 
+  _activatePanResponder = () => {
+    this._panResponder = PanResponder.create({
+      onMoveShouldSetPanResponder: (event, gestureState) => {
+        console.log('_onMoveShouldSetPanResponder__', gestureState.dx, gestureState.dy);
+        return !(Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5);
+      },
+      onPanResponderMove: this._onPanResponderMove.bind(this),
+      onPanResponderRelease: this._onPanResponderRelease.bind(this),
+    });
+  }
+
   _onPanResponderMove(event, gestureState) {
     if (gestureState.dy > 0 && !this.checkCollapsed) {
       // SWIPE DOWN
-
       this.customStyle.style.top = this.top + gestureState.dy;
       this.customStyle.style.height = DEVICE_HEIGHT - gestureState.dy;
       this.swipeIconRef && this.swipeIconRef.setState({ icon: images.minus });
@@ -114,18 +116,22 @@ export default class SwipeUpDown extends Component{
   showFull() {
     const { onShowFull } = this.props;
     this.customStyle.style.top = 0;
-    this.customStyle.style.height = DEVICE_HEIGHT;
+    this.customStyle.style.height = DEVICE_HEIGHT+20;
     this.swipeIconRef &&
       this.swipeIconRef.setState({ icon: images.arrow_down, showIcon: true });
     this.updateNativeProps();
     this.state.collapsed && this.setState({ collapsed: false });
     this.checkCollapsed = false;
     onShowFull && onShowFull();
+    //rz:: customized to fix screen when showFull
+    this._panResponder = PanResponder.create({
+      onPanResponderTerminate: true
+    });
   }
 
   showMini() {
     const { onShowMini, itemMini } = this.props;
-    this.SWIPE_HEIGHT = 150; //Avoid hiding when swiping down.
+    this.SWIPE_HEIGHT = this.props.swipeHeight || 150; //Avoid hiding when swiping down.
     this.customStyle.style.top = itemMini
       ? DEVICE_HEIGHT - this.SWIPE_HEIGHT
       : DEVICE_HEIGHT;
@@ -135,6 +141,7 @@ export default class SwipeUpDown extends Component{
     !this.state.collapsed && this.setState({ collapsed: true });
     this.checkCollapsed = true;
     onShowMini && onShowMini();
+    this._activatePanResponder();
   }
 
   render() {
@@ -150,7 +157,7 @@ export default class SwipeUpDown extends Component{
             height: this.SWIPE_HEIGHT,
             marginTop: MARGIN_TOP
           },
-          !itemMini && collapsed && { marginBottom: -200 },
+          !itemMini && collapsed && { marginBottom: 0 },
           style
         ]}
       >
