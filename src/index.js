@@ -116,7 +116,7 @@ export default class SwipeUpDown extends Component{
   showFull() {
     const { onShowFull } = this.props;
     this.customStyle.style.top = 0;
-    this.customStyle.style.height = DEVICE_HEIGHT+20;
+    this.customStyle.style.height = DEVICE_HEIGHT+40;
     this.swipeIconRef &&
       this.swipeIconRef.setState({ icon: images.arrow_down, showIcon: true });
     this.updateNativeProps();
